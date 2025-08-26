@@ -1,0 +1,6 @@
+*__marimo__/
+*pixi.lock
+
+# pixi environments
+.pixi/*
+!.pixi/config.toml
