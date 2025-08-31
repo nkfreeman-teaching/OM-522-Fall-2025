@@ -54,7 +54,7 @@ def _(np, pl):
         'wj': wj_array,
     })
 
-    data.write_csv('test1.csv')
+    data.write_csv('10_job_test.csv')
     return (data,)
 
 
