@@ -8,11 +8,11 @@ version = "0.1.0"
 [tasks]
 
 [dependencies]
-python = "3.13.*"
+python = ">=3.13.5,<3.14"
 polars = ">=1.32.3,<2"
-marimo = ">=0.15.0,<0.16"
+marimo = ">=0.15.2,<0.16"
 tqdm = ">=4.67.1,<5"
-ipython = ">=9.4.0,<10"
+ipython = ">=9.5.0,<10"
 numpy = ">=2.3.2,<3"
 matplotlib = ">=3.10.5,<4"
 seaborn = ">=0.13.2,<0.14"

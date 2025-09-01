@@ -13,9 +13,10 @@ def _():
 
 @app.cell
 def _(np, pl):
-    np.random.seed(42)
+    seed = 42
+    n = 7
 
-    n = 10
+    np.random.seed(seed)
 
     pj_low = 5
     pj_high = 15
@@ -26,15 +27,18 @@ def _(np, pl):
         size=n
     )
 
-    rj_array = np.random.randint(
-        low=0,
-        high=(n/2)*((pj_low + pj_high)/2),
-        size=n
-    )
+    rjs = []
+    for i in range(n):
+        if i == 0:
+            rjs.append(np.random.randint(0, (pj_low + pj_high)/2))
+        else:
+            rjs.append(rjs[i-1] + np.random.randint(0, (pj_low + pj_high)/2))
+    rj_array = np.array(rjs)
+    np.random.shuffle(rj_array)
 
     dj_offset = np.random.randint(
         low=0,
-        high=25,
+        high=pj_high,
         size=n
     )
 
@@ -54,12 +58,14 @@ def _(np, pl):
         'wj': wj_array,
     })
 
-    data.write_csv('test1.csv')
+    #data.write_csv(f'instance-{n}-{seed}.csv')
     return (data,)
 
 
 @app.cell
 def _(data, pl):
+    ## Critical Ratio
+
     unscheduled_jobs = set(data['j'].to_list())
     scheduled_jobs = set()
     schedule = []
@@ -84,9 +90,27 @@ def _(data, pl):
 
             selected_job_data = available_job_data.to_dicts()[0]
             selected_job_pj = selected_job_data.get('pj')
+            selected_job_rj = selected_job_data.get('rj')
+            selected_job_dj = selected_job_data.get('dj')
+            selected_job_wj = selected_job_data.get('wj')
             selected_job = selected_job_data.get('j')
 
-            schedule.append({'j': selected_job, 't': t, 'pj': selected_job_pj, 'Cj': t + selected_job_pj})
+            selected_job_Cj = t + selected_job_pj
+            selected_job_lateness = selected_job_Cj - selected_job_dj
+            selected_job_tardiness = max(selected_job_Cj - selected_job_dj, 0)
+
+            schedule.append({
+                'j': selected_job, 
+                't': t, 
+                'pj': selected_job_pj,
+                'rj': selected_job_rj,
+                'dj': selected_job_dj,
+                'wj': selected_job_wj,
+                'Cj': selected_job_Cj,
+                'Lj': selected_job_lateness,
+                'Tj': selected_job_tardiness,
+                'wjTj': selected_job_wj*selected_job_tardiness,
+            })
             scheduled_jobs.add(selected_job)
             unscheduled_jobs = unscheduled_jobs - scheduled_jobs
             t += selected_job_pj
@@ -96,6 +120,20 @@ def _(data, pl):
             ).get_column(
                 'rj'
             ).min()
+
+    schedule = pl.DataFrame(
+        schedule,
+    )
+    with pl.Config(tbl_width_chars=150, tbl_cols=10):
+        print(schedule)
+
+    sum_Cj = schedule['Cj'].sum()
+    sum_wjTj = schedule['wjTj'].sum()
+    Lmax = schedule['Lj'].max()
+
+    print(f' - {sum_Cj = :,}')
+    print(f' - {sum_wjTj = :,}')
+    print(f' - {Lmax = :,}')
     return
 
 
