@@ -1,4 +1,5 @@
 *__marimo__/
+*__pycache__/
 *pixi.lock
 
 # pixi environments
