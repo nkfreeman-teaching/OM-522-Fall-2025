@@ -1,0 +1,101 @@
+city,state_id,county_name,county_fips,population,lat,lng
+Birmingham,AL,Jefferson,1073,744189.0,33.5277,-86.7987
+Mobile,AL,Mobile,1097,318084.0,30.6782,-88.1163
+Huntsville,AL,Madison,1089,309716.0,34.6988,-86.6412
+Montgomery,AL,Montgomery,1101,255908.0,32.3473,-86.2666
+Tuscaloosa,AL,Tuscaloosa,1125,154204.0,33.2348,-87.5266
+Auburn,AL,Lee,1081,89577.0,32.6087,-85.4899
+Hoover,AL,Jefferson,1073,84920.0,33.3754,-86.8065
+Florence,AL,Lauderdale,1077,78112.0,34.8303,-87.6654
+Anniston,AL,Calhoun,1015,75169.0,33.6713,-85.8136
+Dothan,AL,Houston,1069,71620.0,31.2335,-85.4068
+Daphne,AL,Baldwin,1003,69065.0,30.6286,-87.8866
+Decatur,AL,Morgan,1103,68816.0,34.573,-86.9905
+Gadsden,AL,Etowah,1055,61656.0,34.009,-86.0156
+Madison,AL,Madison,1089,48861.0,34.7114,-86.7626
+Enterprise,AL,Coffee,1031,38737.0,31.3276,-85.8459
+Albertville,AL,Marshall,1095,37220.0,34.2634,-86.2107
+Phenix City,AL,Russell,1113,36219.0,32.4588,-85.0251
+Prattville,AL,Autauga,1001,35498.0,32.4605,-86.4588
+Vestavia Hills,AL,Jefferson,1073,34291.0,33.4518,-86.7438
+Alabaster,AL,Shelby,1117,33202.0,33.2198,-86.8226
+Foley,AL,Baldwin,1003,33113.0,30.3984,-87.6648
+Opelika,AL,Lee,1081,30240.0,32.6621,-85.3772
+Athens,AL,Limestone,1083,29192.0,34.7847,-86.951
+Bessemer,AL,Jefferson,1073,26386.0,33.3709,-86.9713
+Homewood,AL,Jefferson,1073,25476.0,33.4617,-86.8092
+Northport,AL,Tuscaloosa,1125,25094.0,33.2589,-87.5985
+Pelham,AL,Shelby,1117,23493.0,33.3114,-86.7573
+Trussville,AL,Jefferson,1073,21827.0,33.6404,-86.5818
+Prichard,AL,Mobile,1097,21732.0,30.7735,-88.1301
+Oxford,AL,Calhoun,1015,21180.0,33.5966,-85.869
+Selma,AL,Dallas,1047,21083.0,32.4166,-87.0336
+Fairhope,AL,Baldwin,1003,20935.0,30.522,-87.8816
+Mountain Brook,AL,Jefferson,1073,20381.0,33.4871,-86.74
+Valley,AL,Chambers,1017,20183.0,32.8086,-85.1792
+Cullman,AL,Cullman,1043,19114.0,34.1777,-86.8399
+Helena,AL,Shelby,1117,19072.0,33.2846,-86.8756
+Tillmans Corner,AL,Mobile,1097,18150.0,30.5818,-88.2128
+Sylacauga,AL,Talladega,1121,17307.0,33.1779,-86.2606
+Troy,AL,Pike,1109,16782.0,31.8021,-85.9665
+Center Point,AL,Jefferson,1073,16313.0,33.6446,-86.6851
+Hueytown,AL,Jefferson,1073,15460.0,33.4237,-87.0221
+Millbrook,AL,Elmore,1051,15318.0,32.5035,-86.3728
+Saraland,AL,Mobile,1097,14576.0,30.8457,-88.099
+Hartselle,AL,Morgan,1103,14373.0,34.4391,-86.9401
+Muscle Shoals,AL,Colbert,1033,14022.0,34.7435,-87.6343
+Calera,AL,Shelby,1117,13979.0,33.125,-86.7451
+Gardendale,AL,Jefferson,1073,13906.0,33.6679,-86.8068
+Jasper,AL,Walker,1127,13432.0,33.8514,-87.2719
+Talladega,AL,Talladega,1121,13277.0,33.4329,-86.0976
+Chelsea,AL,Shelby,1117,13011.0,33.3257,-86.6303
+Moody,AL,St. Clair,1115,12956.0,33.5986,-86.4963
+Jacksonville,AL,Calhoun,1015,12612.0,33.8088,-85.7544
+Irondale,AL,Jefferson,1073,12468.0,33.544,-86.6599
+Leeds,AL,Jefferson,1073,12031.0,33.5429,-86.5636
+Pell City,AL,St. Clair,1115,11952.0,33.5609,-86.2668
+Gulf Shores,AL,Baldwin,1003,11809.0,30.2758,-87.7014
+Ozark,AL,Dale,1045,11678.0,31.4508,-85.6473
+Fairfield,AL,Jefferson,1073,10683.0,33.4747,-86.9194
+Saks,AL,Calhoun,1015,10535.0,33.7119,-85.8535
+Forestdale,AL,Jefferson,1073,10118.0,33.5737,-86.9002
+Pleasant Grove,AL,Jefferson,1073,10104.0,33.4936,-86.9782
+Scottsboro,AL,Jackson,1071,9874.0,34.6438,-86.0491
+Russellville,AL,Franklin,1059,9732.0,34.5056,-87.7282
+Boaz,AL,Marshall,1095,9652.0,34.1985,-86.1529
+Clay,AL,Jefferson,1073,9599.0,33.698,-86.6066
+Rainbow City,AL,Etowah,1055,9555.0,33.9337,-86.0922
+Pike Road,AL,Montgomery,1101,9322.0,32.2934,-86.0901
+Alexander City,AL,Tallapoosa,1123,9222.0,32.9242,-85.9361
+Fultondale,AL,Jefferson,1073,9190.0,33.6177,-86.8015
+Meadowbrook,AL,Shelby,1117,9115.0,33.3933,-86.7041
+Sheffield,AL,Colbert,1033,8930.0,34.7559,-87.7007
+Robertsdale,AL,Baldwin,1003,8784.0,30.5534,-87.7022
+Southside,AL,Etowah,1055,8731.0,33.9007,-86.0237
+Eufaula,AL,Barbour,1005,8727.0,31.9102,-85.1505
+Spanish Fort,AL,Baldwin,1003,8644.0,30.7257,-87.8601
+Bay Minette,AL,Baldwin,1003,8532.0,30.893,-87.7912
+Guntersville,AL,Marshall,1095,8429.0,34.3674,-86.2635
+Tuscumbia,AL,Colbert,1033,8398.0,34.7204,-87.7035
+Wetumpka,AL,Elmore,1051,8310.0,32.5405,-86.2053
+Tuskegee,AL,Macon,1087,8258.0,32.4395,-85.7139
+Arab,AL,Marshall,1095,8244.0,34.3309,-86.4991
+Pinson,AL,Jefferson,1073,7532.0,33.7057,-86.6674
+Fort Payne,AL,DeKalb,1049,7048.0,34.4558,-85.6966
+Brook Highland,AL,Shelby,1117,6748.0,33.4359,-86.6849
+Meridianville,AL,Madison,1089,6731.0,34.8729,-86.5722
+Moores Mill,AL,Madison,1089,6695.0,34.8491,-86.5222
+Lincoln,AL,Talladega,1121,6664.0,33.5935,-86.1372
+Brewton,AL,Escambia,1053,6648.0,31.1111,-87.0737
+Hamilton,AL,Marion,1093,6646.0,34.1346,-87.9755
+Montevallo,AL,Shelby,1117,6636.0,33.1254,-86.8482
+Theodore,AL,Mobile,1097,6536.0,30.5408,-88.1884
+Andalusia,AL,Covington,1039,6486.0,31.3101,-86.4781
+Atmore,AL,Escambia,1053,6368.0,31.0927,-87.4763
+Lanett,AL,Chambers,1017,6271.0,32.8576,-85.2079
+Tarrant,AL,Jefferson,1073,6201.0,33.5945,-86.7684
+Satsuma,AL,Mobile,1097,6154.0,30.8577,-88.0632
+Orange Beach,AL,Baldwin,1003,6029.0,30.2941,-87.5851
+Demopolis,AL,Marengo,1091,5907.0,32.498,-87.8298
+Clanton,AL,Chilton,1021,5876.0,32.8439,-86.623
+Harvest,AL,Madison,1089,5839.0,34.8558,-86.7521
