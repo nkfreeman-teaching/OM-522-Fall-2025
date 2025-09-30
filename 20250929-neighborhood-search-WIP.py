@@ -18,7 +18,7 @@ def _():
     from sklearn.metrics.pairwise import haversine_distances
 
     sns.set_style('whitegrid')
-    return haversine_distances, mo, np, pathlib, pl, plt, random, sns
+    return haversine_distances, mo, np, pathlib, pl, plt, random
 
 
 @app.cell(hide_code=True)
@@ -272,6 +272,12 @@ def _(get_distance_df, get_distance_dict, pathlib, pl):
     return coordinate_df, distance_df, distance_dict
 
 
+@app.cell
+def _(distance_dict):
+    distance_dict[('Birmingham', 'Tuscaloosa')]
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""# Construction Heuristic - Nearest Neighbors""")
@@ -351,72 +357,102 @@ def _(random):
         neighbor[index1], neighbor[index2] = neighbor[index2], neighbor[index1]
 
         return neighbor
-    return (generate_PI_neighbor,)
+
+
+    def generate_SSR_neighbor(incumbent_solution):
+
+        index1 = random.randint(0, len(incumbent_solution) - 1)
+        index2 = random.randint(0, len(incumbent_solution) - 1)
+        if index1 > index2:
+            index1, index2 = index2, index1
+
+        neighbor = list(incumbent_solution)
+
+        neighbor[index1:index2+1] = neighbor[index1:index2+1][::-1]
+
+        return neighbor
+    return (generate_SSR_neighbor,)
+
+
+@app.cell
+def _(generate_SSR_neighbor):
+    my_function = generate_SSR_neighbor
+    return
+
+
+@app.cell
+def _(compute_tour_distance, distance_dict):
+    def run_neighborhood_search(
+        initial_solution: list,
+        max_non_improving_iterations: int,
+        neighborhood_function,
+    ) -> dict:
+
+        incumbent_solution = list(initial_solution)
+        incumbent_value = compute_tour_distance(
+            distance_dict=distance_dict,
+            tour_list=incumbent_solution,
+        )
+        ni_iterations = 0
+        while ni_iterations < max_non_improving_iterations:
+            ni_iterations += 1
+
+            neighbor = neighborhood_function(incumbent_solution)
+            neighbor_value = compute_tour_distance(
+                distance_dict=distance_dict,
+                tour_list=neighbor,
+            )
+            if neighbor_value < incumbent_value:
+                incumbent_solution = list(neighbor)
+                incumbent_value = neighbor_value
+                ni_iterations = 0
+
+        return {
+            'incumbent': incumbent_solution,
+            'incumbent_value': incumbent_value
+        }
+    return (run_neighborhood_search,)
 
 
 @app.cell
 def _(
-    compute_tour_distance,
+    coordinate_df,
     distance_df,
-    distance_dict,
-    generate_PI_neighbor,
+    generate_SSR_neighbor,
     get_nearest_neighbors_solution,
-    pl,
-    plt,
-    sns,
+    random,
+    run_neighborhood_search,
 ):
-    #incumbent_solution = coordinate_df['city'].to_list()
+    random.seed(42)
 
-    incumbent_solution = get_nearest_neighbors_solution(
-        distance_df=distance_df,
-        start_location='Tuscaloosa',
-    )
+    possible_starting_locations = coordinate_df['city'].to_list()
 
-    incumbent_value = compute_tour_distance(
-        distance_dict=distance_dict,
-        tour_list=incumbent_solution,
-    )
-    ni_iterations = 0
-    max_iterations = 5_000
-    iter_count = 0
-    solution_progress = []
-    while ni_iterations < max_iterations:
-        ni_iterations += 1
-        iter_count += 1
-
-        neighbor = generate_PI_neighbor(incumbent_solution)
-        neighbor_value = compute_tour_distance(
-            distance_dict=distance_dict,
-            tour_list=neighbor,
+    overall_incumbent = None
+    overall_incumbent_value = None
+    for possible_starting_location in possible_starting_locations:
+        incumbent_solution = get_nearest_neighbors_solution(
+            distance_df=distance_df,
+            start_location=possible_starting_location,
         )
-        if neighbor_value < incumbent_value:
-            incumbent_solution = list(neighbor)
-            incumbent_value = neighbor_value
-            ni_iterations = 0
-        solution_progress.append({
-            'iteration': iter_count,
-            'incumbent_value': incumbent_value,
-        })
+        neighborhood_search_results = run_neighborhood_search(
+            initial_solution = incumbent_solution,
+            max_non_improving_iterations=5_000,
+            neighborhood_function=generate_SSR_neighbor,
+        )
+        incumbent_solution = neighborhood_search_results.get('incumbent')
+        incumbent_value = neighborhood_search_results.get('incumbent_value')
 
-    solution_progress = pl.DataFrame(solution_progress)
-
-    _fig, _ax = plt.subplots(1, 1, figsize=(6, 4))
-
-    sns.lineplot(
-        solution_progress,
-        x='iteration',
-        y='incumbent_value',
-        color='k',
-    )
-
-    plt.show()
-    return (incumbent_solution,)
+        if (overall_incumbent_value is None) or (incumbent_value < overall_incumbent_value):
+            print(f' - New best found starting from {possible_starting_location}')
+            overall_incumbent_value = incumbent_value
+            overall_incumbent = list(incumbent_solution)
+    return (overall_incumbent,)
 
 
 @app.cell
-def _(coordinate_df, incumbent_solution, visualize_tsp_solution):
+def _(coordinate_df, overall_incumbent, visualize_tsp_solution):
     visualize_tsp_solution(
-        tour_list=incumbent_solution,
+        tour_list=overall_incumbent,
         coordinate_df=coordinate_df,
         figsize=(4.5, 6)
     )
