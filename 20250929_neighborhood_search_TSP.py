@@ -16,9 +16,10 @@ def _():
     import polars as pl
     import seaborn as sns
     from sklearn.metrics.pairwise import haversine_distances
+    from tqdm.auto import tqdm
 
     sns.set_style('whitegrid')
-    return haversine_distances, mo, np, pathlib, pl, plt, random
+    return haversine_distances, mo, np, pathlib, pl, plt, random, tqdm
 
 
 @app.cell(hide_code=True)
@@ -91,7 +92,7 @@ def _(haversine_distances, np, pl, plt):
                 lng, 
                 lat, 
                 c='white', 
-                s=50, 
+                s=10, 
                 zorder=5, 
                 edgecolors='black', 
                 linewidth=2,
@@ -272,12 +273,6 @@ def _(get_distance_df, get_distance_dict, pathlib, pl):
     return coordinate_df, distance_df, distance_dict
 
 
-@app.cell
-def _(distance_dict):
-    distance_dict[('Birmingham', 'Tuscaloosa')]
-    return
-
-
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""# Construction Heuristic - Nearest Neighbors""")
@@ -285,18 +280,7 @@ def _(mo):
 
 
 @app.cell
-def _(coordinate_df, mo):
-    city_selection = mo.ui.dropdown(
-        options=coordinate_df['city'].unique().sort().to_list(),
-        value='Tuscaloosa',
-    )
-    city_selection
-    return (city_selection,)
-
-
-@app.cell
 def _(
-    city_selection,
     compute_tour_distance,
     coordinate_df,
     distance_df,
@@ -306,7 +290,7 @@ def _(
 ):
     nn_solution = get_nearest_neighbors_solution(
         distance_df=distance_df,
-        start_location=city_selection.value,
+        start_location='Tuscaloosa'
     )
     nn_distance = compute_tour_distance(
         distance_dict=distance_dict,
@@ -374,9 +358,9 @@ def _(random):
     return (generate_SSR_neighbor,)
 
 
-@app.cell
-def _(generate_SSR_neighbor):
-    my_function = generate_SSR_neighbor
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Function to conduct neigborhood search""")
     return
 
 
@@ -415,6 +399,12 @@ def _(compute_tour_distance, distance_dict):
 
 
 @app.cell
+def _():
+    # Run Nearest Neighbors and Neighborhood Search Across Starting Locations
+    return
+
+
+@app.cell
 def _(
     coordinate_df,
     distance_df,
@@ -422,37 +412,34 @@ def _(
     get_nearest_neighbors_solution,
     random,
     run_neighborhood_search,
+    tqdm,
+    visualize_tsp_solution,
 ):
     random.seed(42)
 
     possible_starting_locations = coordinate_df['city'].to_list()
 
-    overall_incumbent = None
-    overall_incumbent_value = None
-    for possible_starting_location in possible_starting_locations:
-        incumbent_solution = get_nearest_neighbors_solution(
+    incumbent = None
+    incumbent_value = None
+    for possible_starting_location in tqdm(possible_starting_locations):
+        nearest_neighbor_solution = get_nearest_neighbors_solution(
             distance_df=distance_df,
             start_location=possible_starting_location,
         )
         neighborhood_search_results = run_neighborhood_search(
-            initial_solution = incumbent_solution,
+            initial_solution = nearest_neighbor_solution,
             max_non_improving_iterations=5_000,
             neighborhood_function=generate_SSR_neighbor,
         )
-        incumbent_solution = neighborhood_search_results.get('incumbent')
-        incumbent_value = neighborhood_search_results.get('incumbent_value')
+        best_beighborhood_search_solution = neighborhood_search_results.get('incumbent')
+        best_beighborhood_search_value = neighborhood_search_results.get('incumbent_value')
 
-        if (overall_incumbent_value is None) or (incumbent_value < overall_incumbent_value):
-            print(f' - New best found starting from {possible_starting_location}')
-            overall_incumbent_value = incumbent_value
-            overall_incumbent = list(incumbent_solution)
-    return (overall_incumbent,)
+        if (incumbent_value is None) or (incumbent_value < best_beighborhood_search_value):
+            incumbent_value = best_beighborhood_search_value
+            incumbent = list(best_beighborhood_search_solution)
 
-
-@app.cell
-def _(coordinate_df, overall_incumbent, visualize_tsp_solution):
     visualize_tsp_solution(
-        tour_list=overall_incumbent,
+        tour_list=incumbent,
         coordinate_df=coordinate_df,
         figsize=(4.5, 6)
     )
