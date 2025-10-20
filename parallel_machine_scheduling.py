@@ -12,8 +12,9 @@ def _():
     import random
 
     import polars as pl
+    import seaborn as sns
     from tqdm.auto import tqdm
-    return mo, pathlib, pl, random
+    return mo, pathlib, pl, random, sns
 
 
 @app.cell(hide_code=True)
@@ -23,7 +24,7 @@ def _(mo):
 
 
 @app.cell
-def _(M, pj_values, pl):
+def _(M, pj_values, pl, random):
     def compute_workload(
         job_list: list,
         pj_dict: dict,
@@ -83,7 +84,46 @@ def _(M, pj_values, pl):
         return LPT_machine_assignments
 
 
-    def get_schedule_details(schedule_dict: dict) -> dict:
+    def get_spt_schedule(
+        data: pl.DataFrame,
+        pj_dict: dict,
+    ) -> dict:
+
+        SPT_order = data.sort(
+            ['pj', 'j'],
+            descending=[False, False]
+        ).get_column(
+            'j'
+        ).to_list()
+
+        SPT_machine_assignments = {}
+        for idx in range(1, M+1):
+            SPT_machine_assignments[f'M{idx}'] = []
+
+        current_workloads = compute_all_machine_workloads(
+            machine_assignments=SPT_machine_assignments,
+            pj_dict=pj_values,
+        )
+
+        for _job in SPT_order:
+            _selected_machine = min(
+                current_workloads.items(),
+                key=lambda x: x[1]
+            )[0]
+            SPT_machine_assignments[_selected_machine].append(_job)
+
+            current_workloads = compute_all_machine_workloads(
+                machine_assignments=SPT_machine_assignments,
+                pj_dict=pj_values,
+            )
+
+        return SPT_machine_assignments
+
+
+    def get_schedule_details(
+        schedule_dict: dict,
+        pj_dict: dict,
+    ) -> dict:
 
         schedule_details = {}
         for _machine, _machine_sequence in schedule_dict.items():
@@ -92,9 +132,9 @@ def _(M, pj_values, pl):
             for _job in _machine_sequence:
                 _machine_details[_job] = {
                     'start_time': start_time,
-                    'completion_time': start_time + pj_values[_job],
+                    'completion_time': start_time + pj_dict[_job],
                 }
-                start_time = start_time + pj_values[_job]
+                start_time = start_time + pj_dict[_job]
             schedule_details[_machine] = _machine_details
 
         return schedule_details
@@ -131,8 +171,67 @@ def _(M, pj_values, pl):
         ax.set_ylabel('Machines')
         ax.set_title('Gantt Chart')
         plt.show()
+
+
+    def generate_insertion_neighbor(
+        incumbent_solution: dict,
+        pj_dict: dict,
+    ) -> dict:
+
+        incumbent = dict(incumbent_solution)
+    
+        incumbent_workloads = compute_all_machine_workloads(
+            machine_assignments=incumbent,
+            pj_dict=pj_values,
+        )
+    
+        _max_workload_machine = max(
+            incumbent_workloads.items(),
+            key=lambda x: x[1]
+        )[0]
+        _max_workload_machine_jobs = incumbent[_max_workload_machine]
+    
+        _idx = random.randint(a=0, b=len(_max_workload_machine_jobs)-1)
+        _selected_job = _max_workload_machine_jobs[_idx]
+    
+        _new_max_workload_machine_jobs = _max_workload_machine_jobs[:_idx] + _max_workload_machine_jobs[_idx+1:]
+    
+    
+        _min_workload_machine = min(
+            incumbent_workloads.items(),
+            key=lambda x: x[1]
+        )[0]
+        _min_workload_machine_jobs = incumbent[_min_workload_machine]
+    
+        _idx = random.randint(a=0, b=len(_min_workload_machine_jobs)-1)
+    
+        _new_min_workload_machine_jobs = (
+            _min_workload_machine_jobs[:_idx] 
+            + [_selected_job]
+            +_min_workload_machine_jobs[_idx:]
+        )
+    
+        neighbor = dict(incumbent)
+        neighbor[_max_workload_machine] = list(_new_max_workload_machine_jobs)
+        neighbor[_min_workload_machine] = list(_new_min_workload_machine_jobs)
+
+        return neighbor
+
+
+    def compute_makespan(
+        machine_schedule: dict,
+        pj_dict: dict,
+    ) -> int:
+
+        _machine_workloads = compute_all_machine_workloads(
+            machine_assignments=machine_schedule,
+            pj_dict=pj_dict,
+        )
+    
+        return max(_machine_workloads.values())
     return (
-        compute_all_machine_workloads,
+        compute_makespan,
+        generate_insertion_neighbor,
         get_lpt_schedule,
         get_schedule_details,
         make_gantt_chart,
@@ -162,63 +261,68 @@ def _(pathlib, pl):
 
 @app.cell
 def _(
+    compute_makespan,
     data,
+    generate_insertion_neighbor,
     get_lpt_schedule,
     get_schedule_details,
     make_gantt_chart,
     pj_values,
 ):
-    LPT_schedule = get_lpt_schedule(
+    max_ni_iterations = 5_000_000
+
+    # construct initial solution
+    incumbent_solution = get_lpt_schedule(
         data=data,
         pj_dict=pj_values,
     )
+    incumbent_value = compute_makespan(
+        machine_schedule=incumbent_solution,
+        pj_dict=pj_values
+    )
 
-    LPT_schedule_details = get_schedule_details(LPT_schedule)
+    # execute neighborhood search
+    ns_data = []
+    count = 0
+    ni_iterations = 0
+    while ni_iterations < max_ni_iterations:
+        ni_iterations += 1
+        count += 1
+    
+        neighbor_solution = generate_insertion_neighbor(
+            incumbent_solution=incumbent_solution,
+            pj_dict=pj_values,
+        )
+        neighbor_value = compute_makespan(
+            machine_schedule=neighbor_solution,
+            pj_dict=pj_values
+        )
+        if neighbor_value < incumbent_value:
+            ni_iterations = 0
+            incumbent_solution = dict(neighbor_solution)
+            incumbent_value = neighbor_value
+        ns_data.append({
+            'iteration': count,
+            'incumbent_value': incumbent_value,
+        })
+    
 
-    make_gantt_chart(LPT_schedule_details)
-    return (LPT_schedule,)
-
-
-@app.cell
-def _(LPT_schedule, compute_all_machine_workloads, pj_values, random):
-    incumbent = dict(LPT_schedule)
-
-    incumbent_workloads = compute_all_machine_workloads(
-        machine_assignments=incumbent,
+    incumbent_schedule_details = get_schedule_details(
+        schedule_dict=incumbent_solution,
         pj_dict=pj_values,
     )
 
-    _max_workload_machine = max(
-        incumbent_workloads.items(),
-        key=lambda x: x[1]
-    )[0]
-    _max_workload_machine_jobs = incumbent[_max_workload_machine]
-
-    print(f'{_max_workload_machine_jobs = }')
-
-    _idx = random.randint(a=0, b=len(_max_workload_machine_jobs)-1)
-    _selected_job = _max_workload_machine_jobs[_idx]
-
-    _new_max_workload_machine_jobs = _max_workload_machine_jobs[:_idx] + _max_workload_machine_jobs[_idx+1:]
-    print(f'{_new_max_workload_machine_jobs = }')
+    make_gantt_chart(incumbent_schedule_details)
+    return (ns_data,)
 
 
-    _min_workload_machine = min(
-        incumbent_workloads.items(),
-        key=lambda x: x[1]
-    )[0]
-    _min_workload_machine_jobs = incumbent[_min_workload_machine]
-
-    print(f'{_min_workload_machine_jobs = }')
-
-    _idx = random.randint(a=0, b=len(_min_workload_machine_jobs)-1)
-
-    _new_min_workload_machine_jobs = (
-        _min_workload_machine_jobs[:_idx] 
-        + [_selected_job]
-        +_min_workload_machine_jobs[_idx:]
+@app.cell
+def _(ns_data, pl, sns):
+    sns.lineplot(
+        pl.DataFrame(ns_data),
+        x='iteration',
+        y='incumbent_value',
     )
-    print(f'{_new_min_workload_machine_jobs = }')
     return
 
 
