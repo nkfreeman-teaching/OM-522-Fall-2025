@@ -8,7 +8,7 @@ each task in a project network.
 
 import polars as pl
 from collections import defaultdict
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple
 
 
 def calculate_cpm(df: pl.DataFrame) -> Dict[str, Dict[str, int]]:
@@ -151,3 +151,90 @@ def _calculate_late_times(
         late_times[task] = (ls, lf)
 
     return late_times
+
+
+def minimize_maximum_lateness(df: pl.DataFrame) -> Dict[str, Any]:
+    """
+    Solve the single machine scheduling problem to minimize maximum lateness.
+
+    Uses a dynamic earliest due date (EDD) rule to generate the job sequence,
+    considering release times. Jobs are scheduled as early as possible based on
+    their availability and due dates.
+
+    Args:
+        df: A Polars DataFrame with four columns:
+            - "job" (str): Job identifier
+            - "pj" (float): Job processing time
+            - "rj" (float): Job release time
+            - "dj" (float): Job due date
+
+    Returns:
+        A dictionary containing:
+            - "sequence": List of job IDs in the scheduled order
+            - "max_lateness": The maximum lateness value across all jobs
+
+    Example:
+        >>> df = pl.DataFrame({
+        ...     "job": ["J1", "J2", "J3"],
+        ...     "pj": [3, 2, 4],
+        ...     "rj": [0, 1, 0],
+        ...     "dj": [5, 8, 10]
+        ... })
+        >>> result = minimize_maximum_lateness(df)
+        >>> result["max_lateness"]
+    """
+    # Convert DataFrame to list of dictionaries for easier manipulation
+    jobs = df.to_dicts()
+    scheduled = []
+    current_time = 0
+    available_jobs = []
+
+    while len(scheduled) < len(jobs):
+        # Find all jobs that are available (released) at current_time
+        for job in jobs:
+            if job not in scheduled and job["rj"] <= current_time:
+                if job not in available_jobs:
+                    available_jobs.append(job)
+
+        # If no jobs are available, advance time to the next release time
+        if not available_jobs:
+            next_release = min(job["rj"] for job in jobs if job not in scheduled)
+            current_time = next_release
+            continue
+
+        # Select job with earliest due date among available jobs
+        selected_job = min(available_jobs, key=lambda j: j["dj"])
+        available_jobs.remove(selected_job)
+        scheduled.append(selected_job)
+
+        # Update current time
+        current_time += selected_job["pj"]
+
+    # Calculate completion times and lateness for each job
+    current_time = 0
+    max_lateness = float('-inf')
+    job_details = []
+
+    for job in scheduled:
+        # Job starts at max(current_time, release_time)
+        start_time = max(current_time, job["rj"])
+        completion_time = start_time + job["pj"]
+        lateness = completion_time - job["dj"]
+        max_lateness = max(max_lateness, lateness)
+
+        job_details.append({
+            "job": job["job"],
+            "start": start_time,
+            "completion": completion_time,
+            "lateness": lateness
+        })
+
+        current_time = completion_time
+
+    sequence = [job["job"] for job in scheduled]
+
+    return {
+        "sequence": sequence,
+        "max_lateness": max_lateness,
+        "job_details": job_details
+    }
