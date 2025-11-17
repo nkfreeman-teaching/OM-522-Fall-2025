@@ -24,7 +24,37 @@ def _():
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""# Function Definitions""")
+    mo.md(
+        r"""
+    # Traveling Salesman Problem (TSP) with Neighborhood Search
+
+    This notebook solves the **Traveling Salesman Problem (TSP)** using construction heuristics and neighborhood search.
+
+    ## Problem Description
+
+    Given a set of cities with coordinates (latitude, longitude):
+    - **Objective**: Find the shortest tour that visits each city exactly once and returns to the starting city
+    - **Distance metric**: Haversine distance (great-circle distance on Earth's surface)
+
+    ## Solution Approach
+
+    1. **Construction Heuristic**: Nearest Neighbor algorithm
+       - Start from a given city
+       - Repeatedly visit the nearest unvisited city
+       - Return to the starting city
+
+    2. **Improvement**: Neighborhood search with SSR (String String Reversal)
+       - SSR: Reverse a substring of the tour
+       - Accept if tour distance improves
+       - Try multiple starting cities to find the best solution
+    """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Function Definitions""")
     return
 
 
@@ -254,14 +284,25 @@ def _(haversine_distances, np, pl, plt):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""# Data Setup""")
+    mo.md(
+        r"""
+    ## Data Setup
+
+    We load geographic data for 100 cities in Alabama (AL). The dataset includes:
+    - **city**: City name
+    - **lat**: Latitude coordinate
+    - **lng**: Longitude coordinate
+
+    We precompute all pairwise distances using the Haversine formula (distance on Earth's surface in miles).
+    """
+    )
     return
 
 
 @app.cell
 def _(get_distance_df, get_distance_dict, pathlib, pl):
-    data_filepath = pathlib.Path('data/tsp_AL_100.csv')
-    coordinate_df = pl.read_csv(data_filepath)
+    _data_filepath = pathlib.Path('data/tsp_AL_100.csv')
+    coordinate_df = pl.read_csv(_data_filepath)
 
     distance_df = get_distance_df(
         coordinate_df=coordinate_df
@@ -360,7 +401,7 @@ def _(random):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""## Function to conduct neigborhood search""")
+    mo.md(r"""## Function to Conduct Neighborhood Search""")
     return
 
 
@@ -398,9 +439,20 @@ def _(compute_tour_distance, distance_dict):
     return (run_neighborhood_search,)
 
 
-@app.cell
-def _():
-    # Run Nearest Neighbors and Neighborhood Search Across Starting Locations
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    ## Multi-Start Neighborhood Search
+
+    To find a high-quality solution, we:
+    1. Try nearest neighbor construction from **every city** as a starting point
+    2. Improve each construction with SSR neighborhood search (5,000 non-improving iterations)
+    3. Track the best solution found across all starting points
+
+    This multi-start approach helps avoid poor local optima that may result from a single starting location.
+    """
+    )
     return
 
 
@@ -415,39 +467,38 @@ def _(
     tqdm,
     visualize_tsp_solution,
 ):
+    # All variables are local to this cell (marimo scoping)
     random.seed(42)
 
-    possible_starting_locations = coordinate_df['city'].to_list()
+    _possible_starting_locations = coordinate_df['city'].to_list()
 
-    incumbent = None
-    incumbent_value = None
-    for possible_starting_location in tqdm(possible_starting_locations):
-        nearest_neighbor_solution = get_nearest_neighbors_solution(
+    _incumbent = None
+    _incumbent_value = None
+    for _possible_starting_location in tqdm(_possible_starting_locations):
+        _nearest_neighbor_solution = get_nearest_neighbors_solution(
             distance_df=distance_df,
-            start_location=possible_starting_location,
+            start_location=_possible_starting_location,
         )
-        neighborhood_search_results = run_neighborhood_search(
-            initial_solution = nearest_neighbor_solution,
+        _neighborhood_search_results = run_neighborhood_search(
+            initial_solution = _nearest_neighbor_solution,
             max_non_improving_iterations=5_000,
             neighborhood_function=generate_SSR_neighbor,
         )
-        best_beighborhood_search_solution = neighborhood_search_results.get('incumbent')
-        best_beighborhood_search_value = neighborhood_search_results.get('incumbent_value')
+        _best_neighborhood_search_solution = _neighborhood_search_results.get('incumbent')
+        _best_neighborhood_search_value = _neighborhood_search_results.get('incumbent_value')
 
-        if (incumbent_value is None) or (incumbent_value < best_beighborhood_search_value):
-            incumbent_value = best_beighborhood_search_value
-            incumbent = list(best_beighborhood_search_solution)
+        # Update incumbent if this is the first solution or if we found a better (shorter) tour
+        if (_incumbent_value is None) or (_incumbent_value > _best_neighborhood_search_value):
+            _incumbent_value = _best_neighborhood_search_value
+            _incumbent = list(_best_neighborhood_search_solution)
+
+    print(f'Best tour distance found: {_incumbent_value:.2f} miles')
 
     visualize_tsp_solution(
-        tour_list=incumbent,
+        tour_list=_incumbent,
         coordinate_df=coordinate_df,
         figsize=(4.5, 6)
     )
-    return
-
-
-@app.cell
-def _():
     return
 
 

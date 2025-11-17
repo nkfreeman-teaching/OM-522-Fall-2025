@@ -6,6 +6,7 @@ app = marimo.App(width="full")
 
 @app.cell
 def _():
+    import marimo as mo
     import pathlib
     import random
 
@@ -13,7 +14,49 @@ def _():
     import polars as pl
     import seaborn as sns
     from tqdm.auto import tqdm
-    return pathlib, pl, plt, random, sns, tqdm
+    return mo, pathlib, pl, plt, random, sns, tqdm
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    # Single Machine Scheduling: Minimizing Weighted Tardiness
+
+    This notebook solves the single machine scheduling problem with the objective of minimizing total weighted tardiness: **Σ wⱼTⱼ**
+
+    ## Problem Description
+
+    Given a set of jobs where each job j has:
+    - **pⱼ**: Processing time
+    - **rⱼ**: Release time (earliest time the job can start)
+    - **dⱼ**: Due date
+    - **wⱼ**: Weight (importance/priority)
+
+    **Objective**: Find a sequence of jobs that minimizes the sum of weighted tardiness, where:
+    - Tardiness Tⱼ = max(0, Cⱼ - dⱼ)  where Cⱼ is the completion time
+    - Weighted tardiness = wⱼ × Tⱼ
+
+    ## Solution Approach
+
+    1. **Initial Solution**: Shortest Processing Time (SPT) with release times
+       - Select available jobs (released) and process the one with shortest pⱼ
+       - Good baseline for minimizing completion times
+
+    2. **Improvement**: Neighborhood search with two operators:
+       - **API (Adjacent Pairwise Interchange)**: Swap two adjacent jobs in the sequence
+       - **PI (Pairwise Interchange)**: Swap any two random jobs in the sequence
+
+    3. **Experimental Design**: Compare both neighborhood operators with different iteration limits
+    """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Algorithm Functions""")
+    return
 
 
 @app.cell
@@ -139,6 +182,28 @@ def _(pl, random):
     )
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    ## Experimental Design
+
+    We run a computational experiment to compare the effectiveness of different neighborhood operators:
+
+    - **Neighborhood operators**: API (adjacent swap) vs. PI (any pair swap)
+    - **Iteration limits**: 500 and 1,000 non-improving iterations
+    - **Test instances**: All instances in `test_instances_20250930/`
+    - **Random seed**: Fixed at 0 for reproducibility
+
+    For each combination:
+    1. Generate SPT initial solution
+    2. Run neighborhood search
+    3. Record the best solution found
+    """
+    )
+    return
+
+
 @app.cell
 def _(
     compute_API_neighbor,
@@ -151,66 +216,87 @@ def _(
     run_neighborhood_search,
     tqdm,
 ):
-    data_directory = pathlib.Path('test_instances_20250930/')
-    assert data_directory.exists()
+    # All variables are local to this cell (marimo scoping)
+    _data_directory = pathlib.Path('test_instances_20250930/')
+    assert _data_directory.exists()
 
-    possible_neighborhood_functions = {
+    _possible_neighborhood_functions = {
         'API': compute_API_neighbor,
         'PI': compute_PI_neighbor,
     }
 
-    experiment_results = []
+    _experiment_results = []
 
-    data_filepaths = sorted(list(data_directory.glob('*.csv')))
-    for data_filepath in tqdm(data_filepaths):
-        for _neigborhood_function_name, _neigborhood_function in possible_neighborhood_functions.items():
+    _data_filepaths = sorted(list(_data_directory.glob('*.csv')))
+    for _data_filepath in tqdm(_data_filepaths):
+        for _neighborhood_function_name, _neighborhood_function in _possible_neighborhood_functions.items():
             for _max_ni_iterations in [500, 1_000]:
 
                 random.seed(0)
 
-                data = pl.read_csv(data_filepath)
-                data_pd = data.to_pandas().set_index('j')
-                data_dict = data_pd.to_dict(orient='index')
-            
-                spt_solution = get_SPT_solution(data)
-                spt_solution_value = compute_weighted_tardiness(
-                    data_dict=data_dict,
-                    solution=spt_solution,
+                _data = pl.read_csv(_data_filepath)
+                _data_pd = _data.to_pandas().set_index('j')
+                _data_dict = _data_pd.to_dict(orient='index')
+
+                _spt_solution = get_SPT_solution(_data)
+                _spt_solution_value = compute_weighted_tardiness(
+                    data_dict=_data_dict,
+                    solution=_spt_solution,
                 )
 
-                best_neighbor_solution = run_neighborhood_search(
-                    neighborhood_function=_neigborhood_function,
-                    solution=spt_solution,
+                _best_neighbor_solution = run_neighborhood_search(
+                    neighborhood_function=_neighborhood_function,
+                    solution=_spt_solution,
                     objective_function=compute_weighted_tardiness,
-                    data_dict=data_dict,
+                    data_dict=_data_dict,
                     max_non_improving_iterations=_max_ni_iterations,
                 )
-                best_neighbor_solution_value = compute_weighted_tardiness(
-                    data_dict=data_dict,
-                    solution=best_neighbor_solution,
+                _best_neighbor_solution_value = compute_weighted_tardiness(
+                    data_dict=_data_dict,
+                    solution=_best_neighbor_solution,
                 )
 
-                experiment_results.append({
-                    'filename': data_filepath.stem,
-                    'neighborhood': _neigborhood_function_name,
+                _experiment_results.append({
+                    'filename': _data_filepath.stem,
+                    'neighborhood': _neighborhood_function_name,
                     'ni_iterations': _max_ni_iterations,
-                    'best_value': best_neighbor_solution_value,
+                    'best_value': _best_neighbor_solution_value,
                 })
-    return (experiment_results,)
+    return (_experiment_results,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    ## Experimental Results
+
+    The analysis below compares:
+    1. **Neighborhood operator effectiveness**: Which operator (API vs PI) finds better solutions?
+    2. **Iteration limit impact**: Does running longer (1000 vs 500 iterations) improve results significantly?
+    """
+    )
+    return
 
 
 @app.cell
-def _(experiment_results, pl):
-    experiment_results_df = pl.DataFrame(experiment_results)
-    return (experiment_results_df,)
+def _(_experiment_results, pl):
+    _experiment_results_df = pl.DataFrame(_experiment_results)
+    return (_experiment_results_df,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""### Comparison by Neighborhood Operator""")
+    return
 
 
 @app.cell
-def _(experiment_results_df, plt, sns):
+def _(_experiment_results_df, plt, sns):
     _fig, _ax = plt.subplots(1, 1, figsize=(6, 4))
 
     sns.pointplot(
-        experiment_results_df,
+        _experiment_results_df,
         x='neighborhood',
         y='best_value',
         linestyle='none',
@@ -220,23 +306,24 @@ def _(experiment_results_df, plt, sns):
     return
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""### Comparison by Non-Improving Iteration Limit""")
+    return
+
+
 @app.cell
-def _(experiment_results_df, plt, sns):
+def _(_experiment_results_df, plt, sns):
     _fig, _ax = plt.subplots(1, 1, figsize=(6, 4))
 
     sns.pointplot(
-        experiment_results_df,
+        _experiment_results_df,
         x='ni_iterations',
         y='best_value',
         linestyle='none',
     )
 
     plt.show()
-    return
-
-
-@app.cell
-def _():
     return
 
 

@@ -14,12 +14,45 @@ def _():
     import polars as pl
     import seaborn as sns
     from tqdm.auto import tqdm
-    return mo, pathlib, pl, random, sns
+    return mo, pathlib, pl, random, sns, tqdm
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""# Function Defintions""")
+    mo.md(
+        r"""
+    # Parallel Machine Scheduling with Neighborhood Search
+
+    This notebook solves the **parallel machine scheduling problem** to minimize makespan (completion time of the last job).
+
+    ## Problem Description
+
+    Given:
+    - A set of jobs, each with a processing time `pj`
+    - M identical parallel machines
+
+    **Objective**: Assign jobs to machines to minimize the **makespan** (the maximum completion time across all machines).
+
+    The makespan equals the workload of the most heavily loaded machine.
+
+    ## Solution Approach
+
+    1. **Initial Solution**: Use Longest Processing Time (LPT) heuristic
+       - Sort jobs by processing time (longest first)
+       - Assign each job to the machine with minimum current workload
+
+    2. **Improvement**: Use neighborhood search with insertion moves
+       - Move a job from the most loaded machine to the least loaded machine
+       - Accept if makespan improves
+       - Continue until no improvement for a specified number of iterations
+    """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Function Definitions""")
     return
 
 
@@ -240,7 +273,17 @@ def _(M, pj_values, pl, random):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""# Data Preparation""")
+    mo.md(
+        r"""
+    ## Data Preparation
+
+    We load a test instance from the `test_instances_20250930/` directory. Each instance contains:
+    - **`j`**: Job identifier
+    - **`pj`**: Processing time for the job
+
+    We configure the number of parallel machines (`M`) and create a dictionary for fast job lookup.
+    """
+    )
     return
 
 
@@ -248,15 +291,34 @@ def _(mo):
 def _(pathlib, pl):
     M = 3
 
-    data_filepath = pathlib.Path('test_instances_20250930/instance-41-4.csv')
-    assert data_filepath.exists()
+    _data_filepath = pathlib.Path('test_instances_20250930/instance-41-4.csv')
+    assert _data_filepath.exists()
 
     data = pl.read_csv(
-        data_filepath,
+        _data_filepath,
         columns=['j', 'pj']
     )
     pj_values = data.to_pandas().set_index('j')['pj'].to_dict()
     return M, data, pj_values
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    ## Neighborhood Search Execution
+
+    The algorithm proceeds as follows:
+
+    1. **Initialize**: Start with LPT solution
+    2. **Search Loop**: Repeatedly generate neighbor solutions by moving a job from the max-workload machine to the min-workload machine
+    3. **Acceptance**: Accept neighbor if it improves (reduces) the makespan
+    4. **Stopping Criterion**: Stop after 5,000,000 non-improving iterations
+
+    The search tracks the incumbent solution value at each iteration to visualize convergence.
+    """
+    )
+    return
 
 
 @app.cell
@@ -269,65 +331,74 @@ def _(
     make_gantt_chart,
     pj_values,
 ):
-    max_ni_iterations = 5_000_000
+    # All variables in this cell are local (marimo scoping)
+    _max_ni_iterations = 5_000_000
 
     # construct initial solution
-    incumbent_solution = get_lpt_schedule(
+    _incumbent_solution = get_lpt_schedule(
         data=data,
         pj_dict=pj_values,
     )
-    incumbent_value = compute_makespan(
-        machine_schedule=incumbent_solution,
+    _incumbent_value = compute_makespan(
+        machine_schedule=_incumbent_solution,
         pj_dict=pj_values
     )
 
     # execute neighborhood search
-    ns_data = []
-    count = 0
-    ni_iterations = 0
-    while ni_iterations < max_ni_iterations:
-        ni_iterations += 1
-        count += 1
-    
-        neighbor_solution = generate_insertion_neighbor(
-            incumbent_solution=incumbent_solution,
+    _ns_data = []
+    _count = 0
+    _ni_iterations = 0
+    while _ni_iterations < _max_ni_iterations:
+        _ni_iterations += 1
+        _count += 1
+
+        _neighbor_solution = generate_insertion_neighbor(
+            incumbent_solution=_incumbent_solution,
             pj_dict=pj_values,
         )
-        neighbor_value = compute_makespan(
-            machine_schedule=neighbor_solution,
+        _neighbor_value = compute_makespan(
+            machine_schedule=_neighbor_solution,
             pj_dict=pj_values
         )
-        if neighbor_value < incumbent_value:
-            ni_iterations = 0
-            incumbent_solution = dict(neighbor_solution)
-            incumbent_value = neighbor_value
-        ns_data.append({
-            'iteration': count,
-            'incumbent_value': incumbent_value,
+        if _neighbor_value < _incumbent_value:
+            _ni_iterations = 0
+            _incumbent_solution = dict(_neighbor_solution)
+            _incumbent_value = _neighbor_value
+        _ns_data.append({
+            'iteration': _count,
+            'incumbent_value': _incumbent_value,
         })
-    
 
-    incumbent_schedule_details = get_schedule_details(
-        schedule_dict=incumbent_solution,
+
+    _incumbent_schedule_details = get_schedule_details(
+        schedule_dict=_incumbent_solution,
         pj_dict=pj_values,
     )
 
-    make_gantt_chart(incumbent_schedule_details)
-    return (ns_data,)
+    make_gantt_chart(_incumbent_schedule_details)
+    return (_ns_data,)
 
 
-@app.cell
-def _(ns_data, pl, sns):
-    sns.lineplot(
-        pl.DataFrame(ns_data),
-        x='iteration',
-        y='incumbent_value',
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    ## Convergence Visualization
+
+    The plot below shows how the incumbent solution value (makespan) improves over iterations.
+    Flat regions indicate periods where no improving neighbors were found.
+    """
     )
     return
 
 
 @app.cell
-def _():
+def _(_ns_data, pl, sns):
+    sns.lineplot(
+        pl.DataFrame(_ns_data),
+        x='iteration',
+        y='incumbent_value',
+    )
     return
 
 

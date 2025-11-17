@@ -1,32 +1,36 @@
 import marimo
 
-__generated_with = "0.17.6"
+__generated_with = "0.15.2"
 app = marimo.App(width="medium")
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     # Critical Path Method (CPM) Analysis
 
     This notebook implements the Critical Path Method for project scheduling.
     The CPM algorithm helps identify which tasks are critical to completing
     a project on time and calculates the earliest and latest start/finish
     times for each task.
-    """)
+    """
+    )
     return
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     ## Imports
 
     We use the following packages:
     - **polars**: For efficient data loading and manipulation
     - **matplotlib**: For creating the Gantt-style schedule visualization
     - **collections**: For data structures (defaultdict, deque)
-    """)
+    """
+    )
     return
 
 
@@ -41,7 +45,8 @@ def _():
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     ## Function Definitions
 
     This section contains all the functions that implement the CPM algorithm:
@@ -54,7 +59,8 @@ def _(mo):
     6. **find_critical_path**: Identifies tasks with zero slack
     7. **print_results**: Displays formatted results table
     8. **visualize_schedule**: Creates a Gantt chart visualization
-    """)
+    """
+    )
     return
 
 
@@ -294,7 +300,8 @@ def _(defaultdict, pl, plt):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     ## CPM Analysis Execution
 
     This section executes the CPM algorithm:
@@ -304,7 +311,10 @@ def _(mo):
     3. Performs the backward pass to calculate late times
     4. Calculates slack and identifies the critical path
     5. Displays results and creates the visualization
-    """)
+
+    **Note**: The `project_data.csv` file should have columns: `j` (job number), `pj` (processing time), and `pred` (comma-separated predecessor jobs).
+    """
+    )
     return
 
 
@@ -321,44 +331,51 @@ def _(
 ):
     # Load the project data
     print("Loading project data from 'project_data.csv'...")
-    df = load_project_data('project_data.csv')
+    _df = load_project_data('data/project_data.csv')
 
     # Calculate early times (forward pass)
     print("Calculating early start and finish times...")
-    early_times = calculate_early_times(df)
+    _early_times = calculate_early_times(_df)
 
     # Determine project duration
-    project_duration = max(ef for es, ef in early_times.values())
+    _project_duration = max(ef for es, ef in _early_times.values())
 
     # Calculate late times (backward pass)
     print("Calculating late start and finish times...")
-    late_times = calculate_late_times(df, early_times, project_duration)
+    _late_times = calculate_late_times(_df, _early_times, _project_duration)
 
     # Calculate slack
     print("Calculating slack times...")
-    slack = calculate_slack(early_times, late_times)
+    _slack = calculate_slack(_early_times, _late_times)
 
     # Find critical path
-    critical_path = find_critical_path(df, slack)
+    _critical_path = find_critical_path(_df, _slack)
 
     # Print results
-    print_results(df, early_times, late_times, slack, critical_path)
+    print_results(_df, _early_times, _late_times, _slack, _critical_path)
 
     # Visualize schedule
     print("\nGenerating schedule visualization...")
-    fig = visualize_schedule(df, early_times, late_times, slack)
+    _fig = visualize_schedule(_df, _early_times, _late_times, _slack)
 
-    mo.mpl.interactive(fig)
+    mo.mpl.interactive(_fig)
     return
 
 
-@app.cell
-def _():
-    return
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    ## Interpreting the Results
 
+    The output above shows:
+    - **Table**: For each job, displays ES, EF, LS, LF, slack time, and whether it's on the critical path
+    - **Critical Path**: The sequence of jobs with zero slack that determine the minimum project duration
+    - **Gantt Chart**: Visual representation where red bars indicate critical path tasks and light blue bars show non-critical tasks with their available slack time
 
-@app.cell
-def _():
+    Jobs on the critical path **cannot be delayed** without delaying the entire project. Jobs with slack have flexibility in their scheduling.
+    """
+    )
     return
 
 
