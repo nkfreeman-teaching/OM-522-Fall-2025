@@ -301,7 +301,7 @@ def parse_machine_job(machine_job_str: str) -> Tuple[str, str]:
     return parts[0], parts[1]
 
 
-def create_gantt_chart(df: pl.DataFrame, output_file: str = 'gantt_chart.png') -> Tuple[Any, Any]:
+def create_gantt_chart(df: pl.DataFrame) -> Tuple[Any, Any]:
     """
     Create a Gantt chart from the solution data.
 
@@ -389,9 +389,5 @@ def create_gantt_chart(df: pl.DataFrame, output_file: str = 'gantt_chart.png') -
 
     # Tight layout
     plt.tight_layout()
-
-    # Save the figure
-    plt.savefig(output_file, dpi=300, bbox_inches='tight')
-    print(f"Gantt chart saved to {output_file}")
 
     return fig, ax

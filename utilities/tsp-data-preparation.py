@@ -6,13 +6,36 @@ app = marimo.App(width="medium")
 
 @app.cell
 def _():
+    import marimo as mo
     import matplotlib.pyplot as plt
     import polars as pl
     import seaborn as sns
     from sklearn.metrics.pairwise import haversine_distances
 
     sns.set_style('whitegrid')
-    return haversine_distances, pl, plt, sns
+    return haversine_distances, mo, pl, plt, sns
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    # TSP Data Preparation
+
+    This utility visualizes the TSP dataset and demonstrates distance calculations using the Haversine formula.
+
+    ## Features
+
+    - **Visualization**: Plots city locations with population-based marker sizes
+    - **Distance Calculation**: Computes pairwise distances using Haversine (great-circle) formula
+    - **Distance Query**: Finds the closest city to a given target city
+
+    ## Data
+
+    Uses `data/tsp_AL_100.csv` containing 100 Alabama cities with coordinates.
+    """
+    )
+    return
 
 
 @app.cell
@@ -44,18 +67,18 @@ def _(pl, plt, sns):
 
 @app.cell
 def _(data, haversine_distances, pl):
-    lat_lng_array = data.select([
+    _lat_lng_array = data.select([
         'lat_radians',
         'lng_radians',
     ]).to_numpy()
 
-    distance_matrix = haversine_distances(
-        lat_lng_array
+    _distance_matrix = haversine_distances(
+        _lat_lng_array
     )
-    distance_matrix = distance_matrix * (3963.1)
+    _distance_matrix = _distance_matrix * (3963.1)
 
-    distance_df = pl.DataFrame(
-        distance_matrix,
+    _distance_df = pl.DataFrame(
+        _distance_matrix,
         schema=data['city_state'].to_list()
     ).with_columns(
         origin = pl.Series(name='origin', values=data['city_state'].to_list())
@@ -65,17 +88,16 @@ def _(data, haversine_distances, pl):
         value_name='distance'
     )
 
+    _target_city = 'Tuscaloosa, AL'
 
-    target_city = 'Tuscaloosa, AL'
-
-    closest_city = distance_df.filter(
-        pl.col('origin') == target_city,
-        pl.col('destination') != target_city
+    _closest_city = _distance_df.filter(
+        pl.col('origin') == _target_city,
+        pl.col('destination') != _target_city
     ).sort(
         'distance'
     ).item(0, 'destination')
 
-    print(f'The closest city to {target_city} is {closest_city}')
+    print(f'The closest city to {_target_city} is {_closest_city}')
     return
 
 

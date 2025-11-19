@@ -106,7 +106,7 @@ def _(pl, random):
     ) -> int:
 
         t = 0
-    
+
         wjTj = 0
         for job in solution:
             if data_dict[job]['rj'] <= t:
@@ -225,7 +225,7 @@ def _(
         'PI': compute_PI_neighbor,
     }
 
-    _experiment_results = []
+    experiment_results = []
 
     _data_filepaths = sorted(list(_data_directory.glob('*.csv')))
     for _data_filepath in tqdm(_data_filepaths):
@@ -256,13 +256,13 @@ def _(
                     solution=_best_neighbor_solution,
                 )
 
-                _experiment_results.append({
+                experiment_results.append({
                     'filename': _data_filepath.stem,
                     'neighborhood': _neighborhood_function_name,
                     'ni_iterations': _max_ni_iterations,
                     'best_value': _best_neighbor_solution_value,
                 })
-    return (_experiment_results,)
+    return (experiment_results,)
 
 
 @app.cell(hide_code=True)
@@ -280,9 +280,9 @@ def _(mo):
 
 
 @app.cell
-def _(_experiment_results, pl):
-    _experiment_results_df = pl.DataFrame(_experiment_results)
-    return (_experiment_results_df,)
+def _(experiment_results, pl):
+    experiment_results_df = pl.DataFrame(experiment_results)
+    return (experiment_results_df,)
 
 
 @app.cell(hide_code=True)
@@ -292,11 +292,11 @@ def _(mo):
 
 
 @app.cell
-def _(_experiment_results_df, plt, sns):
+def _(experiment_results_df, plt, sns):
     _fig, _ax = plt.subplots(1, 1, figsize=(6, 4))
 
     sns.pointplot(
-        _experiment_results_df,
+        experiment_results_df,
         x='neighborhood',
         y='best_value',
         linestyle='none',
@@ -313,17 +313,22 @@ def _(mo):
 
 
 @app.cell
-def _(_experiment_results_df, plt, sns):
+def _(experiment_results_df, plt, sns):
     _fig, _ax = plt.subplots(1, 1, figsize=(6, 4))
 
     sns.pointplot(
-        _experiment_results_df,
+        experiment_results_df,
         x='ni_iterations',
         y='best_value',
         linestyle='none',
     )
 
     plt.show()
+    return
+
+
+@app.cell
+def _():
     return
 
 

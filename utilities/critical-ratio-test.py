@@ -6,88 +6,114 @@ app = marimo.App(width="medium")
 
 @app.cell
 def _():
+    import marimo as mo
     import pathlib
 
     import numpy as np
     import polars as pl
-    return pathlib, pl
+    return mo, pathlib, pl
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    # Critical Ratio Dispatching Rule - Test
+
+    This utility notebook tests the Critical Ratio dispatching rule implementation and calculates detailed performance metrics.
+
+    ## Metrics Computed
+
+    For each scheduled job:
+    - **Cⱼ**: Completion time
+    - **Lⱼ**: Lateness (Cⱼ - dⱼ)
+    - **Tⱼ**: Tardiness (max(0, Lⱼ))
+    - **wⱼTⱼ**: Weighted tardiness
+
+    **Aggregate Metrics**:
+    - Sum of completion times (Σ Cⱼ)
+    - Sum of weighted tardiness (Σ wⱼTⱼ)
+    - Maximum lateness (Lmax)
+    """
+    )
+    return
 
 
 @app.cell
 def _(pathlib, pl):
-    data_filepath = pathlib.Path('data/10_job_test.csv')
-    assert data_filepath.exists()
+    _data_filepath = pathlib.Path('data/10_job_test.csv')
+    assert _data_filepath.exists()
 
-    data = pl.read_csv(data_filepath)
+    _data = pl.read_csv(_data_filepath)
 
-    unscheduled_jobs = set(data['j'].to_list())
-    scheduled_jobs = set()
-    schedule = []
-    t = 0
+    _unscheduled_jobs = set(_data['j'].to_list())
+    _scheduled_jobs = set()
+    _schedule = []
+    _t = 0
 
-    while unscheduled_jobs:
-        available_jobs = data.filter(
-            pl.col('j').is_in(unscheduled_jobs)
+    while _unscheduled_jobs:
+        _available_jobs = _data.filter(
+            pl.col('j').is_in(_unscheduled_jobs)
         ).filter(
-            pl.col('rj') <= t
+            pl.col('rj') <= _t
         ).get_column(
             'j'
         ).to_list()
-        if available_jobs:
-            available_job_data = data.filter(
-                pl.col('j').is_in(available_jobs)
+        if _available_jobs:
+            _available_job_data = _data.filter(
+                pl.col('j').is_in(_available_jobs)
             ).with_columns(
-                CR = (pl.col('dj') - t)/pl.col('pj')
+                CR = (pl.col('dj') - _t)/pl.col('pj')
             ).sort(
                 'CR'
             )
 
-            selected_job_data = available_job_data.to_dicts()[0]
-            selected_job_pj = selected_job_data.get('pj')
-            selected_job_rj = selected_job_data.get('rj')
-            selected_job_dj = selected_job_data.get('dj')
-            selected_job_wj = selected_job_data.get('wj')
-            selected_job = selected_job_data.get('j')
+            _selected_job_data = _available_job_data.to_dicts()[0]
+            _selected_job_pj = _selected_job_data.get('pj')
+            _selected_job_rj = _selected_job_data.get('rj')
+            _selected_job_dj = _selected_job_data.get('dj')
+            _selected_job_wj = _selected_job_data.get('wj')
+            _selected_job = _selected_job_data.get('j')
 
-            selected_job_Cj = t + selected_job_pj
-            selected_job_lateness = selected_job_Cj - selected_job_dj
-            selected_job_tardiness = max(selected_job_Cj - selected_job_dj, 0)
+            _selected_job_Cj = _t + _selected_job_pj
+            _selected_job_lateness = _selected_job_Cj - _selected_job_dj
+            _selected_job_tardiness = max(_selected_job_Cj - _selected_job_dj, 0)
 
-            schedule.append({
-                'j': selected_job, 
-                't': t, 
-                'pj': selected_job_pj,
-                'rj': selected_job_rj,
-                'dj': selected_job_dj,
-                'wj': selected_job_wj,
-                'Cj': selected_job_Cj,
-                'Lj': selected_job_lateness,
-                'Tj': selected_job_tardiness,
-                'wjTj': selected_job_wj*selected_job_tardiness,
+            _schedule.append({
+                'j': _selected_job,
+                't': _t,
+                'pj': _selected_job_pj,
+                'rj': _selected_job_rj,
+                'dj': _selected_job_dj,
+                'wj': _selected_job_wj,
+                'Cj': _selected_job_Cj,
+                'Lj': _selected_job_lateness,
+                'Tj': _selected_job_tardiness,
+                'wjTj': _selected_job_wj*_selected_job_tardiness,
             })
-            scheduled_jobs.add(selected_job)
-            unscheduled_jobs = unscheduled_jobs - scheduled_jobs
-            t += selected_job_pj
+            _scheduled_jobs.add(_selected_job)
+            _unscheduled_jobs = _unscheduled_jobs - _scheduled_jobs
+            _t += _selected_job_pj
         else:
-            t = data.filter(
-                pl.col('j').is_in(unscheduled_jobs)
+            _t = _data.filter(
+                pl.col('j').is_in(_unscheduled_jobs)
             ).get_column(
                 'rj'
             ).min()
 
-    schedule = pl.DataFrame(
-        schedule,
+    _schedule = pl.DataFrame(
+        _schedule,
     )
     with pl.Config(tbl_width_chars=150, tbl_cols=10):
-        print(schedule)
+        print(_schedule)
 
-    sum_Cj = schedule['Cj'].sum()
-    sum_wjTj = schedule['wjTj'].sum()
-    Lmax = schedule['Lj'].max()
+    _sum_Cj = _schedule['Cj'].sum()
+    _sum_wjTj = _schedule['wjTj'].sum()
+    _Lmax = _schedule['Lj'].max()
 
-    print(f' - {sum_Cj = :,}')
-    print(f' - {sum_wjTj = :,}')
-    print(f' - {Lmax = :,}')
+    print(f' - {_sum_Cj = :,}')
+    print(f' - {_sum_wjTj = :,}')
+    print(f' - {_Lmax = :,}')
     return
 
 

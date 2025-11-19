@@ -29,10 +29,10 @@ All main algorithms are implemented as interactive [Marimo](https://marimo.io/) 
 
 ```bash
 # Run interactively (recommended)
-pixi run marimo edit Shiting_Bottleneck_Heuristic.py
+pixi run marimo edit shifting_bottleneck_heuristic.py
 
 # Or run as script
-pixi run python Shiting_Bottleneck_Heuristic.py
+pixi run python shifting_bottleneck_heuristic.py
 ```
 
 ## Repository Structure
@@ -53,17 +53,19 @@ OM-522-Fall-2025/
 
 | File | Algorithm | Objective |
 |------|-----------|-----------|
-| `Shiting_Bottleneck_Heuristic.py` | Shifting Bottleneck | Minimize makespan (job shop) |
+| `shifting_bottleneck_heuristic.py` | Shifting Bottleneck | Minimize makespan (job shop) |
 | `parallel_machine_scheduling.py` | LPT + Neighborhood Search | Minimize makespan (parallel machines) |
-| `ns_min_wjtj.py` | SPT + Neighborhood Search | Minimize Σ wⱼTⱼ (weighted tardiness) |
-| `20250929_neighborhood_search_TSP.py` | Nearest Neighbor + SSR | Minimize tour distance (TSP) |
-| `20251103_cpm_notebook.py` | Critical Path Method | Project scheduling analysis |
+| `neighborhood_search_min_wjtj.py` | SPT + Neighborhood Search | Minimize Σ wⱼTⱼ (weighted tardiness) |
+| `neighborhood_search_TSP.py` | Nearest Neighbor + SSR | Minimize tour distance (TSP) |
+| `critical_path_method.py` | Critical Path Method | Project scheduling analysis |
+| `clarke-wright-savings.py` | Clarke-Wright Savings | Minimize distance (vehicle routing) |
+| `critical_ratio_dispatching_rule.py` | Critical Ratio Rule | Single machine dispatching |
 
 ## Main Algorithms
 
 ### 1. Shifting Bottleneck Heuristic (Job Shop Scheduling)
 
-**File**: `Shiting_Bottleneck_Heuristic.py`
+**File**: `shifting_bottleneck_heuristic.py`
 
 Solves the job shop scheduling problem to minimize makespan using an iterative bottleneck identification approach.
 
@@ -77,7 +79,7 @@ Solves the job shop scheduling problem to minimize makespan using an iterative b
 
 **Quick run**:
 ```bash
-pixi run marimo edit Shiting_Bottleneck_Heuristic.py
+pixi run marimo edit shifting_bottleneck_heuristic.py
 ```
 
 ### 2. Parallel Machine Scheduling
@@ -100,7 +102,7 @@ pixi run marimo edit parallel_machine_scheduling.py
 
 ### 3. Single Machine Weighted Tardiness
 
-**File**: `ns_min_wjtj.py`
+**File**: `neighborhood_search_min_wjtj.py`
 
 Minimizes total weighted tardiness (Σ wⱼTⱼ) for single machine scheduling with release times and due dates.
 
@@ -115,12 +117,12 @@ Minimizes total weighted tardiness (Σ wⱼTⱼ) for single machine scheduling w
 
 **Quick run**:
 ```bash
-pixi run marimo edit ns_min_wjtj.py
+pixi run marimo edit neighborhood_search_min_wjtj.py
 ```
 
 ### 4. Traveling Salesman Problem
 
-**File**: `20250929_neighborhood_search_TSP.py`
+**File**: `neighborhood_search_TSP.py`
 
 Finds the shortest tour visiting all cities exactly once using multi-start neighborhood search.
 
@@ -133,12 +135,12 @@ Finds the shortest tour visiting all cities exactly once using multi-start neigh
 
 **Quick run**:
 ```bash
-pixi run marimo edit 20250929_neighborhood_search_TSP.py
+pixi run marimo edit neighborhood_search_TSP.py
 ```
 
 ### 5. Critical Path Method (Project Scheduling)
 
-**File**: `20251103_cpm_notebook.py`
+**File**: `critical_path_method.py`
 
 Analyzes project schedules using CPM to identify critical path and calculate slack times.
 
@@ -151,7 +153,44 @@ Analyzes project schedules using CPM to identify critical path and calculate sla
 
 **Quick run**:
 ```bash
-pixi run marimo edit 20251103_cpm_notebook.py
+pixi run marimo edit critical_path_method.py
+```
+
+### 6. Clarke-Wright Savings (Vehicle Routing)
+
+**File**: `clarke-wright-savings.py`
+
+Solves the Capacitated Vehicle Routing Problem (CVRP) using the Clarke-Wright Savings algorithm.
+
+**How it works**:
+1. Initialize: Each customer starts in their own route
+2. Calculate savings for each customer pair: s(i,j) = d(depot,i) + d(j,depot) - d(i,j)
+3. Merge routes in order of highest savings while respecting capacity constraints
+4. Use Nearest Neighbor to sequence visits within each cluster
+
+**Input**: `data/tsp_AL_100.csv` with Birmingham as depot
+
+**Quick run**:
+```bash
+pixi run marimo edit clarke-wright-savings.py
+```
+
+### 7. Critical Ratio Dispatching Rule
+
+**File**: `critical_ratio_dispatching_rule.py`
+
+Implements the Critical Ratio dispatching rule for single machine scheduling with release times.
+
+**How it works**:
+1. At each decision point, calculate CR = (dⱼ - t) / pⱼ for available jobs
+2. Select the job with smallest critical ratio (most urgent)
+3. Continue until all jobs are scheduled
+
+**Input**: `data/10_job_test.csv` with columns `j`, `pj`, `rj`, `dj`
+
+**Quick run**:
+```bash
+pixi run marimo edit critical_ratio_dispatching_rule.py
 ```
 
 ## Data Formats

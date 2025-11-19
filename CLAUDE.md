@@ -49,7 +49,7 @@ Python 3.13+ with core libraries:
 
 ### Main Implementations
 
-**Shifting Bottleneck Heuristic (SBN)** - `Shiting_Bottleneck_Heuristic.py`
+**Shifting Bottleneck Heuristic (SBN)** - `shifting_bottleneck_heuristic.py`
 - Iterative algorithm for job shop scheduling to minimize makespan
 - Algorithm flow:
   1. Load job shop data from CSV (columns: `job`, `machine_sequence`, `pij`)
@@ -70,7 +70,7 @@ Python 3.13+ with core libraries:
   - `compute_makespan()` - Objective function evaluation
 - Non-improving iterations stopping criterion (default: 5,000,000)
 
-**Single Machine Scheduling** - `ns_min_wjtj.py`
+**Single Machine Scheduling** - `neighborhood_search_min_wjtj.py`
 - Minimizes weighted tardiness (ΣwⱼTⱼ)
 - Initial solution: SPT (Shortest Processing Time) with release times
 - Neighborhood search with two operators:
@@ -78,11 +78,23 @@ Python 3.13+ with core libraries:
   - `compute_PI_neighbor()` - Random Pairwise Interchange
 - `run_neighborhood_search()` - Generic neighborhood search framework
 
-**CPM Analysis** - `20251103_cpm_notebook.py`
+**TSP with Neighborhood Search** - `neighborhood_search_TSP.py`
+- Minimizes tour distance using Nearest Neighbor + SSR improvement
+- Multi-start approach trying all cities as starting points
+
+**CPM Analysis** - `critical_path_method.py`
 - Standalone Critical Path Method implementation for project scheduling
 - Identifies critical path (tasks with zero slack)
 - Input: CSV with columns `j` (job), `pj` (duration), `pred` (comma-separated predecessors)
 - Visualizes schedule with critical/non-critical tasks color-coded
+
+**Clarke-Wright Savings** - `clarke-wright-savings.py`
+- Solves Capacitated Vehicle Routing Problem (CVRP)
+- Uses savings formula to merge routes while respecting capacity constraints
+
+**Critical Ratio Dispatching** - `critical_ratio_dispatching_rule.py`
+- Single machine dispatching using Critical Ratio rule
+- CR = (dⱼ - t) / pⱼ for prioritizing jobs
 
 ## Data Format Conventions
 
@@ -146,14 +158,41 @@ Marimo has unique variable scoping rules that prevent common errors:
        return _data,
    ```
 
-2. **Underscore Prefix for Local Variables**: Variables starting with `_` are local to that cell
+2. **Underscore Prefix Makes Variables Cell-Local ONLY**: Variables starting with `_` are local to that cell and **CANNOT be accessed from other cells**
+
+   **CRITICAL**: This means `_` prefixed variables:
+   - Cannot be returned from their cell (they are automatically excluded)
+   - Cannot be used as parameters in other cells
+   - Are completely invisible to other cells
+
    ```python
+   # ❌ WRONG - _results cannot be accessed from another cell
    @app.cell
    def _(data):
-       _temp = data.copy()
-       _result = process(_temp)
-       # _temp and _result are local to this cell
-       return final_result,
+       _results = []
+       for _item in data:
+           _results.append(process(_item))
+       return  # _results is NOT returned (underscore prefix)
+
+   @app.cell
+   def _():
+       print(_results)  # ERROR: _results is not defined in this cell!
+       return
+   ```
+
+   ```python
+   # ✅ CORRECT - remove underscore if you need to share across cells
+   @app.cell
+   def _(data):
+       results = []  # No underscore - will be shared
+       for _item in data:  # Loop var still uses underscore
+           results.append(process(_item))
+       return (results,)  # Explicitly return
+
+   @app.cell
+   def _(results):  # Now this cell can access results
+       print(results)
+       return
    ```
 
 3. **Function-Scoped Variables**: Variables inside functions are automatically local
@@ -168,8 +207,9 @@ Marimo has unique variable scoping rules that prevent common errors:
 
 ### Best Practices
 
+- **Shared variables**: Do NOT use `_` prefix for variables that other cells need to access
 - **Loop variables**: Always use `_` prefix for variables in loops/iterations
-- **Temporary computations**: Use `_` prefix for intermediate values
+- **Temporary computations**: Use `_` prefix for intermediate values that stay within the cell
 - **Return only exports**: Only return variables that other cells need to access
 - **Working copies**: When modifying data from another cell, create a local copy with `_` prefix
 
@@ -180,13 +220,45 @@ def _(input_data):
     # Create local working copy
     _working_data = input_data.clone()
 
+    # Results to share - NO underscore
+    results = []
+
     # All loop/intermediate variables with underscore
     for _item in _working_data:
         _processed = process(_item)
-        _results.append(_processed)
+        results.append(_processed)
 
-    # Return only what other cells need
-    return final_output,
+    # Return only what other cells need (without underscore)
+    return (results,)
+```
+
+### Common Mistake to Avoid
+```python
+# ❌ WRONG - This is a common mistake!
+@app.cell
+def _(data):
+    _experiment_results = []  # Underscore makes it cell-local
+    for _item in data:
+        _experiment_results.append(compute(_item))
+    return  # _experiment_results is NOT exported
+
+@app.cell
+def _(pl):
+    df = pl.DataFrame(_experiment_results)  # ERROR: undefined!
+    return
+
+# ✅ CORRECT - Remove underscore for shared variables
+@app.cell
+def _(data):
+    experiment_results = []  # No underscore - will be shared
+    for _item in data:
+        experiment_results.append(compute(_item))
+    return (experiment_results,)  # Explicitly return
+
+@app.cell
+def _(experiment_results, pl):  # Accept as parameter
+    df = pl.DataFrame(experiment_results)  # Works!
+    return
 ```
 
 ## Running the Code
@@ -228,12 +300,12 @@ pixi run python Shiting_Bottleneck_Heuristic.py
 
 ### Converting Between Formats
 ```python
-# Job shop → CPM network
-for machine, pij in zip(machine_sequence, pij_list):
-    current_machine_job = f'{machine},{job}'
+# Job shop → CPM network (in a Marimo cell, use underscore prefix for loop variables)
+for _machine, _pij in zip(machine_sequence, pij_list):
+    _current_machine_job = f'{_machine},{job}'
 
 # Polars → dict for iteration
-data_dict = data.to_pandas().set_index('j').to_dict(orient='index')
+_data_dict = data.to_pandas().set_index('j').to_dict(orient='index')
 ```
 
 ### Neighborhood Search Template

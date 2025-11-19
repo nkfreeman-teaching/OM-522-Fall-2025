@@ -14,7 +14,7 @@ def _():
     import polars as pl
     import seaborn as sns
     from tqdm.auto import tqdm
-    return mo, pathlib, pl, random, sns, tqdm
+    return mo, pathlib, pl, random, sns
 
 
 @app.cell(hide_code=True)
@@ -212,38 +212,38 @@ def _(M, pj_values, pl, random):
     ) -> dict:
 
         incumbent = dict(incumbent_solution)
-    
+
         incumbent_workloads = compute_all_machine_workloads(
             machine_assignments=incumbent,
             pj_dict=pj_values,
         )
-    
+
         _max_workload_machine = max(
             incumbent_workloads.items(),
             key=lambda x: x[1]
         )[0]
         _max_workload_machine_jobs = incumbent[_max_workload_machine]
-    
+
         _idx = random.randint(a=0, b=len(_max_workload_machine_jobs)-1)
         _selected_job = _max_workload_machine_jobs[_idx]
-    
+
         _new_max_workload_machine_jobs = _max_workload_machine_jobs[:_idx] + _max_workload_machine_jobs[_idx+1:]
-    
-    
+
+
         _min_workload_machine = min(
             incumbent_workloads.items(),
             key=lambda x: x[1]
         )[0]
         _min_workload_machine_jobs = incumbent[_min_workload_machine]
-    
+
         _idx = random.randint(a=0, b=len(_min_workload_machine_jobs)-1)
-    
+
         _new_min_workload_machine_jobs = (
             _min_workload_machine_jobs[:_idx] 
             + [_selected_job]
             +_min_workload_machine_jobs[_idx:]
         )
-    
+
         neighbor = dict(incumbent)
         neighbor[_max_workload_machine] = list(_new_max_workload_machine_jobs)
         neighbor[_min_workload_machine] = list(_new_min_workload_machine_jobs)
@@ -260,7 +260,7 @@ def _(M, pj_values, pl, random):
             machine_assignments=machine_schedule,
             pj_dict=pj_dict,
         )
-    
+
         return max(_machine_workloads.values())
     return (
         compute_makespan,
@@ -332,7 +332,7 @@ def _(
     pj_values,
 ):
     # All variables in this cell are local (marimo scoping)
-    _max_ni_iterations = 5_000_000
+    _max_ni_iterations = 100_000
 
     # construct initial solution
     _incumbent_solution = get_lpt_schedule(
@@ -345,7 +345,7 @@ def _(
     )
 
     # execute neighborhood search
-    _ns_data = []
+    ns_data = []
     _count = 0
     _ni_iterations = 0
     while _ni_iterations < _max_ni_iterations:
@@ -364,7 +364,7 @@ def _(
             _ni_iterations = 0
             _incumbent_solution = dict(_neighbor_solution)
             _incumbent_value = _neighbor_value
-        _ns_data.append({
+        ns_data.append({
             'iteration': _count,
             'incumbent_value': _incumbent_value,
         })
@@ -376,7 +376,7 @@ def _(
     )
 
     make_gantt_chart(_incumbent_schedule_details)
-    return (_ns_data,)
+    return (ns_data,)
 
 
 @app.cell(hide_code=True)
@@ -393,12 +393,17 @@ def _(mo):
 
 
 @app.cell
-def _(_ns_data, pl, sns):
+def _(ns_data, pl, sns):
     sns.lineplot(
-        pl.DataFrame(_ns_data),
+        pl.DataFrame(ns_data),
         x='iteration',
         y='incumbent_value',
     )
+    return
+
+
+@app.cell
+def _():
     return
 
 
