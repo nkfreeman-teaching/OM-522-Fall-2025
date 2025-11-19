@@ -468,10 +468,11 @@ def _(customer_locations, depot, savings_data):
         _customer2_cluster_idx = customer2cluster.get(_customer2)
         _customer2_cluster_members = cluster2customers.get(_customer2_cluster_idx)
 
-        if (len(_customer1_cluster_members) + len(_customer2_cluster_members)) <= CAPACITY:
-            cluster2customers[_customer1_cluster_idx].extend(_customer2_cluster_members)
-            cluster2customers[_customer2_cluster_idx] = None
-            customer2cluster = get_customer2cluster_mapping(cluster2customers)
+        if _customer1_cluster_idx != _customer2_cluster_idx:
+            if (len(_customer1_cluster_members) + len(_customer2_cluster_members)) <= CAPACITY:
+                cluster2customers[_customer1_cluster_idx].extend(_customer2_cluster_members)
+                cluster2customers[_customer2_cluster_idx] = None
+                customer2cluster = get_customer2cluster_mapping(cluster2customers)
 
 
     cluster2customers = {_key: _val for _key, _val in cluster2customers.items() if _val}
@@ -552,11 +553,6 @@ def _(coordinate_df, routes, visualize_solution):
         coordinate_df=coordinate_df,
         figsize=(5, 8)
     )
-    return
-
-
-@app.cell
-def _():
     return
 
 
